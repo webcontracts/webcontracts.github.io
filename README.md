@@ -10,13 +10,13 @@ Initializes a webcredits directory
 
 Issues a new asset
 
-[issueasset](/issueasset/)
+- [issueasset](/issueasset/)
 
 ## mark
 
-Marks anything
+Mark anything
 
-- [issueasset](/issueasset/)
+- [mark](/mark/)
 
 ## Search
 
