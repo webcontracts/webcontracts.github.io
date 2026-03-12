@@ -94,13 +94,25 @@ Each transition increments `seq` and sets `prev` to SHA-256 of the previous stat
 
 ## Ledger effects
 
-Transition functions return an `effects` array. The pod executes these against the [webledger](https://webledgers.org) atomically.
+Transition functions return an `effects` array. The executor applies these against the [webledger](https://webledgers.org) atomically.
 
 - `{ op: "credit", who, currency, amount }` — add to balance
 - `{ op: "debit", who, currency, amount }` — subtract from balance
 - `{ op: "transfer", from, to, currency, amount }` — atomic move
 
-The contract never touches the ledger directly. It declares intent; the pod enforces it.
+The contract never touches the ledger directly. It declares intent; the executor enforces it.
+
+---
+
+## Validation
+
+Web contracts use a **trust but verify** model:
+
+1. **Executor** — runs the contract source, validates transitions, updates state + ledger + trail atomically. Any server or local process that can run the contract language.
+2. **Client** — submits transitions. Can optionally run the contract source locally to preview results before submitting.
+3. **Verifier** — anyone. Download the contract source, replay the state chain from genesis, check each `prev` hash, verify the blocktrail against Bitcoin. If the executor cheated, the chain breaks.
+
+No consensus mechanism. No global blockchain. The executor is efficient (single process), and the hash chain + Bitcoin trail provides cryptographic tamper evidence.
 
 ---
 
@@ -125,11 +137,19 @@ Works for humans (NIP-07 browser extensions) and AI agents (stored keys) alike.
 
 ## Transport
 
-Contracts live on [Solid pods](https://solidproject.org/). All operations are HTTP:
+Web contracts are transport-agnostic. The four files can live anywhere:
+
+| Host | Example |
+|------|---------|
+| [Solid pod](https://solidproject.org/) | Full integration — auth, ledger, and trail built in |
+| Web server | Any HTTP server with a contract executor |
+| Git repo | State as commits, trail as tags |
+| Local directory | Agent runs executor locally, syncs state |
+
+When served over HTTP:
 
 ```
 PUT  /contracts/{id}/contract.json  — deploy contract
-PUT  /contracts/{id}/amm.js         — deploy source
 GET  /contracts/{id}/state.json     — read current state
 POST /contracts/{id}/               — submit a transition
 GET  /contracts/{id}/trail.json     — read audit trail

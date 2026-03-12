@@ -327,7 +327,7 @@
 
     <h2>Ledger effects</h2>
 
-    <p>Transition functions return an <code>effects</code> array. The pod executes these against the <a href="https://webledgers.org">webledger</a> atomically with the state update.</p>
+    <p>Transition functions return an <code>effects</code> array. The executor applies these against the <a href="https://webledgers.org">webledger</a> atomically with the state update.</p>
 
     <ul class="effects">
       <li>{ op: "credit", who, currency, amount } <span>&mdash; add to balance</span></li>
@@ -335,7 +335,23 @@
       <li>{ op: "transfer", from, to, currency, amount } <span>&mdash; atomic move</span></li>
     </ul>
 
-    <p>The contract never touches the ledger directly. It declares intent; the pod enforces it.</p>
+    <p>The contract never touches the ledger directly. It declares intent; the executor enforces it.</p>
+
+    <hr>
+
+    <h2 id="how-it-works">Validation</h2>
+
+    <p>Web contracts use a <strong>trust but verify</strong> model. There are three roles:</p>
+
+    <div class="how-it-works">
+      <ol>
+        <li><strong>Executor</strong> &mdash; runs the contract source, validates transitions, updates state + ledger + trail atomically. This is any server (or local process) that can load and run the contract language.</li>
+        <li><strong>Client</strong> &mdash; submits transitions as JSON. Can optionally run the contract source locally to <em>preview</em> results before submitting (like simulating a swap to show expected output).</li>
+        <li><strong>Verifier</strong> &mdash; anyone. Download the contract source, replay the state chain from genesis, check each <code>prev</code> hash, verify the <a href="https://blocktrails.org">blocktrail</a> against Bitcoin. If the executor cheated, the chain breaks.</li>
+      </ol>
+    </div>
+
+    <p>No consensus mechanism. No global blockchain. The executor is efficient (single process), and the hash chain + Bitcoin trail provides cryptographic tamper evidence. Anyone with the contract source can independently verify the full history.</p>
 
     <hr>
 
@@ -347,20 +363,24 @@
 
     <hr>
 
-    <h2 id="how-it-works">How it works</h2>
+    <h2>Transport</h2>
 
-    <p>Contracts live on <a href="https://solidproject.org/">Solid pods</a>. All operations are HTTP.</p>
+    <p>Web contracts are transport-agnostic. The four files can live anywhere:</p>
 
-    <div class="how-it-works">
-      <ol>
-        <li><strong>Deploy</strong> a contract &mdash; <code>PUT /contracts/{id}/contract.json</code> + source file</li>
-        <li><strong>Read</strong> current state &mdash; <code>GET /contracts/{id}/state.json</code></li>
-        <li><strong>Submit</strong> a transition &mdash; <code>POST /contracts/{id}/</code> with NIP-98 auth</li>
-        <li>The pod <strong>loads</strong> the contract source, <strong>calls</strong> the transition function</li>
-        <li>The pod <strong>applies</strong> state update, ledger effects, and trail anchor atomically</li>
-        <li><strong>Verify</strong> &mdash; <code>GET /contracts/{id}/trail.json</code> and check against Bitcoin</li>
-      </ol>
-    </div>
+    <table>
+      <tr><th>Host</th><th>Example</th></tr>
+      <tr><td><a href="https://solidproject.org/">Solid pod</a></td><td>Full integration &mdash; auth, ledger, and trail built in</td></tr>
+      <tr><td>Web server</td><td>Any HTTP server with a contract executor</td></tr>
+      <tr><td>Git repo</td><td>State as commits, trail as tags</td></tr>
+      <tr><td>Local directory</td><td>Agent runs executor locally, syncs state</td></tr>
+    </table>
+
+    <p>When served over HTTP, the convention is:</p>
+
+<pre><code>PUT  /contracts/{id}/contract.json  &mdash; deploy contract
+GET  /contracts/{id}/state.json     &mdash; read current state
+POST /contracts/{id}/               &mdash; submit a transition
+GET  /contracts/{id}/trail.json     &mdash; read audit trail</code></pre>
 
     <p>Transitions are submitted as JSON:</p>
 
@@ -377,15 +397,16 @@
 
     <ol>
       <li>Agent gets a nostr keypair (identity)</li>
-      <li>Agent reads <code>contract.json</code> to understand the rules</li>
+      <li>Agent reads <code>contract.json</code> + source to understand the rules</li>
       <li>Agent reads <code>state.json</code> to see current values</li>
+      <li>Agent can <em>simulate</em> transitions locally before submitting</li>
       <li>Agent submits transitions via HTTP + NIP-98</li>
       <li>Agent verifies trail against Bitcoin</li>
     </ol>
 
     <p>No browser required. No human approval. Compatible with <a href="https://openclaw.ai">OpenClaw</a>, <a href="https://nanoclaw.dev">nanoclaw</a>, and any agent framework that can make HTTP requests.</p>
 
-    <p>An agent can even <em>write</em> a contract &mdash; deploy <code>contract.json</code> + source to a pod, and other agents can interact with it.</p>
+    <p>An agent can even <em>write</em> a contract &mdash; deploy <code>contract.json</code> + source, and other agents or humans can interact with it.</p>
 
     <hr>
 
