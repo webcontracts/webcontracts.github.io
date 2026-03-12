@@ -4,31 +4,38 @@
       <stop offset="0%" stop-color="#fafaf8"/>
       <stop offset="100%" stop-color="#f0efeb"/>
     </linearGradient>
+    <marker id="og-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <path d="M0,0 L10,3.5 L0,7" fill="#b0aaa0"/>
+    </marker>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <!-- Title -->
-  <text x="100" y="180" font-family="Georgia, serif" font-size="64" font-weight="700" fill="#2c2c2c" letter-spacing="-1">Web Contracts</text>
-  <text x="100" y="240" font-family="Georgia, serif" font-size="28" fill="#6b6b6b">State machines anchored to Bitcoin</text>
-  <!-- Four boxes -->
+  <text x="100" y="180" font-family="DejaVu Serif, serif" font-size="64" font-weight="bold" fill="#2c2c2c">Web Contracts</text>
+  <text x="100" y="240" font-family="DejaVu Sans, sans-serif" font-size="26" fill="#6b6b6b">State machines anchored to Bitcoin</text>
+  <!-- Contract box (highlighted) -->
   <rect x="100" y="300" width="210" height="110" rx="10" fill="#eee8d5" stroke="#d4c5a0" stroke-width="2"/>
-  <text x="205" y="345" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#2c2c2c" text-anchor="middle">Contract</text>
-  <text x="205" y="375" font-family="-apple-system, sans-serif" font-size="16" fill="#6b6b6b" text-anchor="middle">JS / Solidity / Python</text>
-  <rect x="360" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
-  <text x="465" y="345" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#2c2c2c" text-anchor="middle">State</text>
-  <text x="465" y="375" font-family="-apple-system, sans-serif" font-size="16" fill="#6b6b6b" text-anchor="middle">JSON + hash chain</text>
-  <rect x="620" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
-  <text x="725" y="345" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#2c2c2c" text-anchor="middle">Ledger</text>
-  <text x="725" y="375" font-family="-apple-system, sans-serif" font-size="16" fill="#6b6b6b" text-anchor="middle">webledgers.org</text>
-  <rect x="880" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
-  <text x="985" y="345" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#2c2c2c" text-anchor="middle">Trail</text>
-  <text x="985" y="375" font-family="-apple-system, sans-serif" font-size="16" fill="#6b6b6b" text-anchor="middle">blocktrails.org</text>
-  <!-- Arrows between boxes -->
+  <text x="205" y="345" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="bold" fill="#2c2c2c" text-anchor="middle">Contract</text>
+  <text x="205" y="375" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#6b6b6b" text-anchor="middle">JS / Solidity / Python</text>
+  <!-- Arrow -->
   <path d="M315,355 L355,355" stroke="#b0aaa0" stroke-width="2" fill="none" marker-end="url(#og-arrow)"/>
+  <!-- State box -->
+  <rect x="360" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
+  <text x="465" y="345" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="bold" fill="#2c2c2c" text-anchor="middle">State</text>
+  <text x="465" y="375" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#6b6b6b" text-anchor="middle">JSON + hash chain</text>
+  <!-- Arrow -->
   <path d="M575,355 L615,355" stroke="#b0aaa0" stroke-width="2" fill="none" marker-end="url(#og-arrow)"/>
+  <!-- Ledger box -->
+  <rect x="620" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
+  <text x="725" y="345" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="bold" fill="#2c2c2c" text-anchor="middle">Ledger</text>
+  <text x="725" y="375" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#6b6b6b" text-anchor="middle">webledgers.org</text>
+  <!-- Arrow -->
   <path d="M835,355 L875,355" stroke="#b0aaa0" stroke-width="2" fill="none" marker-end="url(#og-arrow)"/>
-  <defs><marker id="og-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#b0aaa0"/></marker></defs>
+  <!-- Trail box -->
+  <rect x="880" y="300" width="210" height="110" rx="10" fill="#f0efeb" stroke="#c8c4bc" stroke-width="2"/>
+  <text x="985" y="345" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="bold" fill="#2c2c2c" text-anchor="middle">Trail</text>
+  <text x="985" y="375" font-family="DejaVu Sans, sans-serif" font-size="14" fill="#6b6b6b" text-anchor="middle">blocktrails.org</text>
   <!-- Tagline -->
-  <text x="100" y="480" font-family="Georgia, serif" font-size="20" fill="#6b6b6b" font-style="italic">No VM. No gas fees. No blockchain. Just JSON + HTTP + Bitcoin.</text>
+  <text x="100" y="480" font-family="DejaVu Serif, serif" font-size="20" fill="#6b6b6b" font-style="italic">No VM. No gas fees. No blockchain. Just JSON + HTTP + Bitcoin.</text>
   <!-- URL -->
-  <text x="100" y="560" font-family="SF Mono, Fira Code, monospace" font-size="20" fill="#1a5276">webcontracts.org</text>
+  <text x="100" y="560" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#1a5276">webcontracts.org</text>
 </svg>
