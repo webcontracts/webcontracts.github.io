@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Web Contracts — JSON state machines anchored to Bitcoin</title>
-  <meta name="description" content="A minimal smart contracting system: state.json + webledgers + blocktrails. No VM, no bytecode, no blockchain. Just JSON + HTTP + Bitcoin.">
+  <meta name="description" content="A minimal smart contracting system: contract logic + state.json + webledgers + blocktrails. No VM, no blockchain. Just code + JSON + HTTP + Bitcoin.">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -29,13 +29,14 @@
     p { margin-bottom: 16px; }
     a { color: #1a5276; }
 
-    /* Triad */
-    .triad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0 32px; }
-    .triad-item { background: #f0efeb; border-radius: 8px; padding: 20px; text-align: center; }
-    .triad-icon { font-size: 1.8rem; margin-bottom: 8px; }
-    .triad-name { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .triad-role { font-size: 0.82rem; color: #6b6b6b; line-height: 1.4; }
-    .triad-link { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; color: #1a5276; display: block; margin-top: 8px; }
+    /* Quad */
+    .quad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 32px; }
+    .quad-item { background: #f0efeb; border-radius: 8px; padding: 18px 14px; text-align: center; }
+    .quad-item.highlight { background: #eee8d5; border: 1px solid #d4c5a0; }
+    .quad-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .quad-name { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .quad-role { font-size: 0.78rem; color: #6b6b6b; line-height: 1.4; }
+    .quad-link { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.72rem; color: #1a5276; display: block; margin-top: 8px; }
 
     /* Tagline */
     .tagline { font-size: 1.1rem; color: #6b6b6b; font-style: italic; margin: 24px 0 32px; padding: 16px 24px; border-left: 3px solid #d4c5a0; background: #f7f5f0; border-radius: 0 6px 6px 0; }
@@ -45,6 +46,7 @@
     code { font-family: 'SF Mono', 'Fira Code', Menlo, monospace; font-size: 0.88em; }
     p code, li code, td code { background: #f0efeb; padding: 2px 6px; border-radius: 4px; }
     pre code { background: none; padding: 0; font-size: 1em; }
+    .code-label { font-family: -apple-system, sans-serif; font-size: 0.78rem; font-weight: 600; color: #6b6b6b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
 
     /* How it works */
     .how-it-works { background: #f7f5f0; border-radius: 8px; padding: 28px 32px; margin: 24px 0; }
@@ -64,6 +66,12 @@
     .profile-desc { font-size: 0.88rem; color: #4a4a4a; margin-bottom: 8px; }
     .profile-meta { font-size: 0.78rem; color: #6b6b6b; line-height: 1.5; }
     .profile-meta strong { color: #4a4a4a; }
+
+    /* Languages grid */
+    .langs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 28px; }
+    .lang { background: #f0efeb; border-radius: 8px; padding: 14px 16px; text-align: center; }
+    .lang-name { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .lang-note { font-size: 0.75rem; color: #6b6b6b; }
 
     /* Diagram */
     .diagram { background: #f0efeb; border-radius: 8px; padding: 24px; margin: 20px 0 28px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.8; white-space: pre; overflow-x: auto; text-align: center; }
@@ -88,8 +96,9 @@
       body { font-size: 0.95rem; }
       h1 { font-size: 2rem; }
       .wrap { padding: 32px 0 48px; }
-      .triad { grid-template-columns: 1fr; }
+      .quad { grid-template-columns: 1fr 1fr; }
       .profiles { grid-template-columns: 1fr; }
+      .langs { grid-template-columns: 1fr; }
       nav { flex-wrap: wrap; gap: 12px; }
       footer { flex-direction: column; gap: 8px; }
     }
@@ -100,79 +109,156 @@
 
     <header>
       <h1>Web Contracts</h1>
-      <div class="subtitle">JSON state machines anchored to Bitcoin</div>
+      <div class="subtitle">State machines anchored to Bitcoin</div>
       <nav>
-        <a href="#spec">Spec</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#contract">Contract</a>
+        <a href="#state">State</a>
         <a href="#profiles">Profiles</a>
         <a href="#how-it-works">How it works</a>
         <a href="https://github.com/webcontracts">GitHub</a>
-        <a href="https://webledgers.org">Web Ledgers</a>
-        <a href="https://blocktrails.org">Blocktrails</a>
       </nav>
     </header>
 
-    <p>A web contract is three files working together. No VM. No bytecode. No blockchain. Just JSON + HTTP + Bitcoin.</p>
+    <p>A web contract separates <strong>logic</strong> from <strong>data</strong>. The contract defines rules in any language. The state, ledger, and trail are always JSON &mdash; universal, language-agnostic, verifiable.</p>
 
-    <div class="triad">
-      <div class="triad-item">
-        <div class="triad-icon">&#x1F4DC;</div>
-        <div class="triad-name">State</div>
-        <div class="triad-role">Contract rules, current state, valid transitions</div>
-        <a class="triad-link" href="#spec">state.json</a>
+    <div class="quad">
+      <div class="quad-item highlight">
+        <div class="quad-icon">&#x2699;</div>
+        <div class="quad-name">Contract</div>
+        <div class="quad-role">Logic &amp; rules in any language</div>
+        <a class="quad-link" href="#contract">contract.json</a>
       </div>
-      <div class="triad-item">
-        <div class="triad-icon">&#x1F4B0;</div>
-        <div class="triad-name">Ledger</div>
-        <div class="triad-role">Who owns what &mdash; balances, multi-currency</div>
-        <a class="triad-link" href="https://webledgers.org">webledgers.org</a>
+      <div class="quad-item">
+        <div class="quad-icon">&#x1F4DC;</div>
+        <div class="quad-name">State</div>
+        <div class="quad-role">Current values, seq &amp; hash chain</div>
+        <a class="quad-link" href="#state">state.json</a>
       </div>
-      <div class="triad-item">
-        <div class="triad-icon">&#x26D3;</div>
-        <div class="triad-name">Trail</div>
-        <div class="triad-role">Proof &mdash; Bitcoin-anchored via BIP-341 key chaining</div>
-        <a class="triad-link" href="https://blocktrails.org">blocktrails.org</a>
+      <div class="quad-item">
+        <div class="quad-icon">&#x1F4B0;</div>
+        <div class="quad-name">Ledger</div>
+        <div class="quad-role">Who owns what &mdash; balances</div>
+        <a class="quad-link" href="https://webledgers.org">webledgers.org</a>
+      </div>
+      <div class="quad-item">
+        <div class="quad-icon">&#x26D3;</div>
+        <div class="quad-name">Trail</div>
+        <div class="quad-role">Bitcoin proof via key chaining</div>
+        <a class="quad-link" href="https://blocktrails.org">blocktrails.org</a>
       </div>
     </div>
 
-    <div class="tagline">No accounts. No passwords. No OAuth. Just a keypair. Works for humans and AI agents alike.</div>
+    <div class="tagline">The contract is the class. The state is the instance. The ledger tracks ownership. The trail proves it happened.</div>
 
     <hr>
 
-    <h2 id="spec">state.json</h2>
+    <h2 id="architecture">Architecture</h2>
 
-    <p>A contract is a state machine. It defines what states exist, what transitions are valid, and what effects each transition has on the ledger.</p>
+    <p>A web contract cleanly separates concerns:</p>
 
+    <table>
+      <tr><th>Layer</th><th>File</th><th>Mutable?</th><th>Role</th></tr>
+      <tr><td><strong>Contract</strong></td><td><code>contract.json</code></td><td>No</td><td>Rules &amp; transition logic (immutable once deployed)</td></tr>
+      <tr><td><strong>State</strong></td><td><code>state.json</code></td><td>Yes</td><td>Current values, updated each transition</td></tr>
+      <tr><td><strong>Ledger</strong></td><td><code>ledger.json</code></td><td>Yes</td><td>Balance tracking (<a href="https://webledgers.org">webledgers</a>)</td></tr>
+      <tr><td><strong>Trail</strong></td><td>blocktrail</td><td>Append</td><td>Bitcoin-anchored audit log (<a href="https://blocktrails.org">blocktrails</a>)</td></tr>
+    </table>
+
+    <p>The contract logic is <strong>pluggable</strong>. State, ledger, and trail are always the same format regardless of what language the contract is written in.</p>
+
+    <div class="diagram">contract.js/sol/py        state.json        ledger.json        trail
++------------------+    +------------+    +--------------+    +--------+
+| validate()       |--->| seq, prev  |--->| balances     |--->| Bitcoin|
+| transition()     |    | state data |    | multi-currency|   | BIP-341|
+| effects()        |    | hash chain |    | did:nostr     |   | anchor |
++------------------+    +------------+    +--------------+    +--------+
+     language              JSON               JSON             Bitcoin</div>
+
+    <hr>
+
+    <h2 id="contract">contract.json</h2>
+
+    <p>The contract declares its profile, language, and source. The logic lives in a separate file written in any supported language.</p>
+
+    <div class="code-label">contract.json</div>
 <pre><code>{
   "@context": "https://webcontracts.org/v1",
   "type": "WebContract",
   "profile": "amm.v1",
   "id": "pool-tbtc3-tbtc4",
-  "seq": 0,
-  "prev": null,
+  "language": "javascript",
+  "source": "amm.js",
+  "created": 1741737600
+}</code></pre>
 
-  "state": {
-    "pair": ["tbtc3", "tbtc4"],
-    "reserves": { "tbtc3": 0, "tbtc4": 0 },
-    "k": 0,
-    "fee": 0.003,
-    "totalShares": 0,
-    "lpShares": {}
-  },
+    <p>The source file exports transition functions. Each receives the current state and params, and returns the new state plus ledger effects:</p>
 
-  "transitions": {
-    "swap": {
-      "requires": ["sell", "amount"],
-      "conditions": ["reserves[sell] &gt; 0", "k &gt; 0"],
-      "effects": ["debit(sender, sell, amount)", "credit(sender, buy, amountOut)"]
+    <div class="code-label">amm.js</div>
+<pre><code>export function swap(state, params, ledger) {
+  const { sender, sell, amount } = params
+  const buy = state.pair.find(u =&gt; u !== sell)
+  const rIn = state.reserves[sell], rOut = state.reserves[buy]
+  const amtAfterFee = amount * (1 - state.fee)
+  const out = Math.floor((rOut * amtAfterFee) / (rIn + amtAfterFee))
+
+  return {
+    state: {
+      ...state,
+      reserves: {
+        [sell]: rIn + amount,
+        [buy]: rOut - out,
+      },
+      k: (rIn + amount) * (rOut - out),
     },
-    "add-liquidity": {
-      "requires": ["amountA", "amountB"],
-      "effects": ["debit(sender, pairA, amountA)", "mintShares(sender)"]
-    },
-    "remove-liquidity": {
-      "requires": ["shares"],
-      "effects": ["burnShares(sender, shares)", "credit(sender, pairA, withdrawA)"]
-    }
+    effects: [
+      { op: 'debit', who: sender, currency: sell, amount },
+      { op: 'credit', who: sender, currency: buy, amount: out },
+    ]
+  }
+}</code></pre>
+
+    <h3>Contract languages</h3>
+
+    <p>The contract logic is swappable. The pod just needs an executor for the language.</p>
+
+    <div class="langs">
+      <div class="lang">
+        <div class="lang-name">JavaScript</div>
+        <div class="lang-note">Native on Node.js pods</div>
+      </div>
+      <div class="lang">
+        <div class="lang-name">Solidity</div>
+        <div class="lang-note">Via solc / EVM in WASM</div>
+      </div>
+      <div class="lang">
+        <div class="lang-name">Python</div>
+        <div class="lang-note">Via sandboxed runtime</div>
+      </div>
+    </div>
+
+    <p>The contract interface is always the same: a function that takes <code>(state, params, ledger)</code> and returns <code>{ state, effects }</code>. The language is an implementation detail.</p>
+
+    <hr>
+
+    <h2 id="state">state.json</h2>
+
+    <p>The state is pure data &mdash; no logic. It holds the current values and a hash chain for verification.</p>
+
+    <div class="code-label">state.json</div>
+<pre><code>{
+  "contract": "pool-tbtc3-tbtc4",
+  "seq": 5,
+  "prev": "a1b2c3d4e5f6...",
+  "updated": 1741737600,
+
+  "pair": ["tbtc3", "tbtc4"],
+  "reserves": { "tbtc3": 5000, "tbtc4": 10000 },
+  "k": 50000000,
+  "fee": 0.003,
+  "totalShares": 1000,
+  "lpShares": {
+    "did:nostr:abc123...": 1000
   }
 }</code></pre>
 
@@ -180,29 +266,26 @@
 
     <table>
       <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-      <tr><td><code>@context</code></td><td>URI</td><td>Always <code>https://webcontracts.org/v1</code></td></tr>
-      <tr><td><code>type</code></td><td>string</td><td>Always <code>WebContract</code></td></tr>
-      <tr><td><code>profile</code></td><td>string</td><td>Contract type (e.g. <code>amm.v1</code>, <code>escrow.v1</code>)</td></tr>
-      <tr><td><code>id</code></td><td>string</td><td>Unique contract identifier</td></tr>
+      <tr><td><code>contract</code></td><td>string</td><td>References the contract id</td></tr>
       <tr><td><code>seq</code></td><td>number</td><td>Transition sequence number, starts at 0</td></tr>
       <tr><td><code>prev</code></td><td>string|null</td><td>SHA-256 of previous JCS-canonicalized state</td></tr>
-      <tr><td><code>state</code></td><td>object</td><td>Current state (profile-specific)</td></tr>
-      <tr><td><code>transitions</code></td><td>object</td><td>Valid transitions with requirements, conditions, effects</td></tr>
+      <tr><td><code>updated</code></td><td>number</td><td>Unix timestamp of last transition</td></tr>
+      <tr><td><em>...rest</em></td><td>any</td><td>Profile-specific state data</td></tr>
     </table>
 
     <h3>Sequencing</h3>
 
-    <p>Each transition increments <code>seq</code> and sets <code>prev</code> to the SHA-256 hash of the previous state (<a href="https://www.rfc-editor.org/rfc/rfc8785">JCS</a>-canonicalized). This creates a hash chain anchored to Bitcoin via <a href="https://blocktrails.org">blocktrails</a>.</p>
+    <p>Each transition increments <code>seq</code> and sets <code>prev</code> to the SHA-256 hash of the previous state (<a href="https://www.rfc-editor.org/rfc/rfc8785">JCS</a>-canonicalized). This creates a hash chain that can be verified independently and anchored to Bitcoin via <a href="https://blocktrails.org">blocktrails</a>.</p>
 
-    <div class="diagram">genesis (seq:0) &rarr; transition &rarr; state (seq:1) &rarr; transition &rarr; state (seq:2)
-       |                            |                            |
-       blocktrail                   blocktrail                   blocktrail</div>
+    <div class="diagram">genesis (seq:0) &rarr; swap &rarr; state (seq:1) &rarr; add-liq &rarr; state (seq:2)
+       |                          |                              |
+       blocktrail                 blocktrail                     blocktrail</div>
 
     <hr>
 
     <h2 id="profiles">Profiles</h2>
 
-    <p>Profiles define the shape of <code>state</code> and the semantics of <code>transitions</code>. A contract declares its profile and implementations validate against it.</p>
+    <p>Profiles define the shape of state and the expected transitions. A contract declares its profile; the source file implements it.</p>
 
     <div class="profiles">
       <div class="profile">
@@ -242,17 +325,17 @@
 
     <hr>
 
-    <h2>Ledger integration</h2>
+    <h2>Ledger effects</h2>
 
-    <p>Each transition that moves value updates the <a href="https://webledgers.org">webledger</a>. The contract references the ledger but does not contain balances &mdash; the ledger is the source of truth for ownership.</p>
-
-    <p>Transitions specify effects using ledger operations:</p>
+    <p>Transition functions return an <code>effects</code> array. The pod executes these against the <a href="https://webledgers.org">webledger</a> atomically with the state update.</p>
 
     <ul class="effects">
-      <li>credit(who, currency, amount) <span>&mdash; add to balance</span></li>
-      <li>debit(who, currency, amount) <span>&mdash; subtract from balance</span></li>
-      <li>transfer(from, to, currency, amount) <span>&mdash; atomic move</span></li>
+      <li>{ op: "credit", who, currency, amount } <span>&mdash; add to balance</span></li>
+      <li>{ op: "debit", who, currency, amount } <span>&mdash; subtract from balance</span></li>
+      <li>{ op: "transfer", from, to, currency, amount } <span>&mdash; atomic move</span></li>
     </ul>
+
+    <p>The contract never touches the ledger directly. It declares intent; the pod enforces it.</p>
 
     <hr>
 
@@ -270,11 +353,12 @@
 
     <div class="how-it-works">
       <ol>
-        <li><strong>Read</strong> the contract &mdash; <code>GET /contracts/{id}/state.json</code></li>
-        <li><strong>Submit</strong> a transition &mdash; <code>POST /contracts/{id}/</code> with a signed NIP-98 header</li>
-        <li>The pod <strong>validates</strong> the transition against the contract rules</li>
-        <li>The pod <strong>updates</strong> state, ledger, and trail atomically</li>
-        <li><strong>Verify</strong> the trail &mdash; <code>GET /contracts/{id}/trail.json</code> and check against Bitcoin</li>
+        <li><strong>Deploy</strong> a contract &mdash; <code>PUT /contracts/{id}/contract.json</code> + source file</li>
+        <li><strong>Read</strong> current state &mdash; <code>GET /contracts/{id}/state.json</code></li>
+        <li><strong>Submit</strong> a transition &mdash; <code>POST /contracts/{id}/</code> with NIP-98 auth</li>
+        <li>The pod <strong>loads</strong> the contract source, <strong>calls</strong> the transition function</li>
+        <li>The pod <strong>applies</strong> state update, ledger effects, and trail anchor atomically</li>
+        <li><strong>Verify</strong> &mdash; <code>GET /contracts/{id}/trail.json</code> and check against Bitcoin</li>
       </ol>
     </div>
 
@@ -293,12 +377,15 @@
 
     <ol>
       <li>Agent gets a nostr keypair (identity)</li>
-      <li>Agent reads <code>state.json</code> to understand the rules</li>
+      <li>Agent reads <code>contract.json</code> to understand the rules</li>
+      <li>Agent reads <code>state.json</code> to see current values</li>
       <li>Agent submits transitions via HTTP + NIP-98</li>
       <li>Agent verifies trail against Bitcoin</li>
     </ol>
 
     <p>No browser required. No human approval. Compatible with <a href="https://openclaw.ai">OpenClaw</a>, <a href="https://nanoclaw.dev">nanoclaw</a>, and any agent framework that can make HTTP requests.</p>
+
+    <p>An agent can even <em>write</em> a contract &mdash; deploy <code>contract.json</code> + source to a pod, and other agents can interact with it.</p>
 
     <hr>
 
@@ -306,7 +393,7 @@
 
     <table>
       <tr><th>Project</th><th>Role</th></tr>
-      <tr><td><a href="https://github.com/JavaScriptSolidServer/JavaScriptSolidServer">JavaScript Solid Server</a></td><td>Implements payment and AMM profiles</td></tr>
+      <tr><td><a href="https://github.com/JavaScriptSolidServer/JavaScriptSolidServer">JavaScript Solid Server</a></td><td>Implements payment and AMM profiles (JavaScript)</td></tr>
       <tr><td><a href="https://webledgers.org">Web Ledgers</a></td><td>Balance tracking spec</td></tr>
       <tr><td><a href="https://blocktrails.org">Blocktrails</a></td><td>Bitcoin anchoring spec</td></tr>
       <tr><td><a href="https://nip98.com">NIP-98</a></td><td>HTTP authentication</td></tr>
