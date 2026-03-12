@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web Contracts — JSON state machines anchored to Bitcoin</title>
+  <meta name="description" content="A minimal smart contracting system: state.json + webledgers + blocktrails. No VM, no bytecode, no blockchain. Just JSON + HTTP + Bitcoin.">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font: 1.05rem/1.7 Georgia, 'Times New Roman', serif;
+      color: #2c2c2c;
+      background: #fafaf8;
+      padding: 0 20px;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 48px 0 80px; }
+
+    /* Header */
+    header { margin-bottom: 48px; border-bottom: 1px solid #e0ddd8; padding-bottom: 32px; }
+    h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .subtitle { font-size: 1.15rem; color: #6b6b6b; margin-bottom: 16px; }
+    nav { display: flex; gap: 20px; font-size: 0.88rem; }
+    nav a { color: #1a5276; text-decoration: none; font-family: -apple-system, sans-serif; font-weight: 600; }
+    nav a:hover { text-decoration: underline; }
+
+    /* Sections */
+    h2 { font-size: 1.5rem; font-weight: 700; margin: 48px 0 16px; letter-spacing: -0.01em; }
+    h3 { font-size: 1.1rem; font-weight: 700; margin: 32px 0 8px; }
+    p { margin-bottom: 16px; }
+    a { color: #1a5276; }
+
+    /* Triad */
+    .triad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0 32px; }
+    .triad-item { background: #f0efeb; border-radius: 8px; padding: 20px; text-align: center; }
+    .triad-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .triad-name { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .triad-role { font-size: 0.82rem; color: #6b6b6b; line-height: 1.4; }
+    .triad-link { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; color: #1a5276; display: block; margin-top: 8px; }
+
+    /* Tagline */
+    .tagline { font-size: 1.1rem; color: #6b6b6b; font-style: italic; margin: 24px 0 32px; padding: 16px 24px; border-left: 3px solid #d4c5a0; background: #f7f5f0; border-radius: 0 6px 6px 0; }
+
+    /* Code */
+    pre { background: #f0efeb; border-radius: 8px; padding: 20px; overflow-x: auto; margin: 16px 0 24px; font-size: 0.82rem; line-height: 1.6; }
+    code { font-family: 'SF Mono', 'Fira Code', Menlo, monospace; font-size: 0.88em; }
+    p code, li code, td code { background: #f0efeb; padding: 2px 6px; border-radius: 4px; }
+    pre code { background: none; padding: 0; font-size: 1em; }
+
+    /* How it works */
+    .how-it-works { background: #f7f5f0; border-radius: 8px; padding: 28px 32px; margin: 24px 0; }
+    .how-it-works ol { padding-left: 20px; }
+    .how-it-works li { margin-bottom: 10px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.9rem; }
+    th { text-align: left; font-family: -apple-system, sans-serif; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6b6b6b; padding: 8px 12px; border-bottom: 2px solid #e0ddd8; }
+    td { padding: 10px 12px; border-bottom: 1px solid #eae8e3; vertical-align: top; }
+    td code { font-size: 0.85em; }
+
+    /* Profiles grid */
+    .profiles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0 32px; }
+    .profile { background: #f0efeb; border-radius: 8px; padding: 18px 20px; }
+    .profile-name { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+    .profile-desc { font-size: 0.88rem; color: #4a4a4a; margin-bottom: 8px; }
+    .profile-meta { font-size: 0.78rem; color: #6b6b6b; line-height: 1.5; }
+    .profile-meta strong { color: #4a4a4a; }
+
+    /* Diagram */
+    .diagram { background: #f0efeb; border-radius: 8px; padding: 24px; margin: 20px 0 28px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.8; white-space: pre; overflow-x: auto; text-align: center; }
+
+    /* List */
+    ul, ol { margin: 8px 0 20px; padding-left: 24px; }
+    li { margin-bottom: 6px; }
+
+    /* Effects list */
+    .effects { list-style: none; padding: 0; margin: 16px 0 24px; }
+    .effects li { background: #f0efeb; border-radius: 6px; padding: 10px 16px; margin-bottom: 8px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; }
+    .effects li span { color: #6b6b6b; font-family: Georgia, serif; font-size: 0.9rem; margin-left: 8px; }
+
+    /* Footer */
+    footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #e0ddd8; font-size: 0.85rem; color: #6b6b6b; display: flex; justify-content: space-between; }
+    footer a { color: #1a5276; }
+
+    /* Separator */
+    hr { border: none; border-top: 1px solid #e0ddd8; margin: 48px 0; }
+
+    @media (max-width: 600px) {
+      body { font-size: 0.95rem; }
+      h1 { font-size: 2rem; }
+      .wrap { padding: 32px 0 48px; }
+      .triad { grid-template-columns: 1fr; }
+      .profiles { grid-template-columns: 1fr; }
+      nav { flex-wrap: wrap; gap: 12px; }
+      footer { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <h1>Web Contracts</h1>
+      <div class="subtitle">JSON state machines anchored to Bitcoin</div>
+      <nav>
+        <a href="#spec">Spec</a>
+        <a href="#profiles">Profiles</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="https://github.com/webcontracts">GitHub</a>
+        <a href="https://webledgers.org">Web Ledgers</a>
+        <a href="https://blocktrails.org">Blocktrails</a>
+      </nav>
+    </header>
+
+    <p>A web contract is three files working together. No VM. No bytecode. No blockchain. Just JSON + HTTP + Bitcoin.</p>
+
+    <div class="triad">
+      <div class="triad-item">
+        <div class="triad-icon">&#x1F4DC;</div>
+        <div class="triad-name">State</div>
+        <div class="triad-role">Contract rules, current state, valid transitions</div>
+        <a class="triad-link" href="#spec">state.json</a>
+      </div>
+      <div class="triad-item">
+        <div class="triad-icon">&#x1F4B0;</div>
+        <div class="triad-name">Ledger</div>
+        <div class="triad-role">Who owns what &mdash; balances, multi-currency</div>
+        <a class="triad-link" href="https://webledgers.org">webledgers.org</a>
+      </div>
+      <div class="triad-item">
+        <div class="triad-icon">&#x26D3;</div>
+        <div class="triad-name">Trail</div>
+        <div class="triad-role">Proof &mdash; Bitcoin-anchored via BIP-341 key chaining</div>
+        <a class="triad-link" href="https://blocktrails.org">blocktrails.org</a>
+      </div>
+    </div>
+
+    <div class="tagline">No accounts. No passwords. No OAuth. Just a keypair. Works for humans and AI agents alike.</div>
+
+    <hr>
+
+    <h2 id="spec">state.json</h2>
+
+    <p>A contract is a state machine. It defines what states exist, what transitions are valid, and what effects each transition has on the ledger.</p>
+
+<pre><code>{
+  "@context": "https://webcontracts.org/v1",
+  "type": "WebContract",
+  "profile": "amm.v1",
+  "id": "pool-tbtc3-tbtc4",
+  "seq": 0,
+  "prev": null,
+
+  "state": {
+    "pair": ["tbtc3", "tbtc4"],
+    "reserves": { "tbtc3": 0, "tbtc4": 0 },
+    "k": 0,
+    "fee": 0.003,
+    "totalShares": 0,
+    "lpShares": {}
+  },
+
+  "transitions": {
+    "swap": {
+      "requires": ["sell", "amount"],
+      "conditions": ["reserves[sell] &gt; 0", "k &gt; 0"],
+      "effects": ["debit(sender, sell, amount)", "credit(sender, buy, amountOut)"]
+    },
+    "add-liquidity": {
+      "requires": ["amountA", "amountB"],
+      "effects": ["debit(sender, pairA, amountA)", "mintShares(sender)"]
+    },
+    "remove-liquidity": {
+      "requires": ["shares"],
+      "effects": ["burnShares(sender, shares)", "credit(sender, pairA, withdrawA)"]
+    }
+  }
+}</code></pre>
+
+    <h3>Fields</h3>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>@context</code></td><td>URI</td><td>Always <code>https://webcontracts.org/v1</code></td></tr>
+      <tr><td><code>type</code></td><td>string</td><td>Always <code>WebContract</code></td></tr>
+      <tr><td><code>profile</code></td><td>string</td><td>Contract type (e.g. <code>amm.v1</code>, <code>escrow.v1</code>)</td></tr>
+      <tr><td><code>id</code></td><td>string</td><td>Unique contract identifier</td></tr>
+      <tr><td><code>seq</code></td><td>number</td><td>Transition sequence number, starts at 0</td></tr>
+      <tr><td><code>prev</code></td><td>string|null</td><td>SHA-256 of previous JCS-canonicalized state</td></tr>
+      <tr><td><code>state</code></td><td>object</td><td>Current state (profile-specific)</td></tr>
+      <tr><td><code>transitions</code></td><td>object</td><td>Valid transitions with requirements, conditions, effects</td></tr>
+    </table>
+
+    <h3>Sequencing</h3>
+
+    <p>Each transition increments <code>seq</code> and sets <code>prev</code> to the SHA-256 hash of the previous state (<a href="https://www.rfc-editor.org/rfc/rfc8785">JCS</a>-canonicalized). This creates a hash chain anchored to Bitcoin via <a href="https://blocktrails.org">blocktrails</a>.</p>
+
+    <div class="diagram">genesis (seq:0) &rarr; transition &rarr; state (seq:1) &rarr; transition &rarr; state (seq:2)
+       |                            |                            |
+       blocktrail                   blocktrail                   blocktrail</div>
+
+    <hr>
+
+    <h2 id="profiles">Profiles</h2>
+
+    <p>Profiles define the shape of <code>state</code> and the semantics of <code>transitions</code>. A contract declares its profile and implementations validate against it.</p>
+
+    <div class="profiles">
+      <div class="profile">
+        <div class="profile-name">amm.v1</div>
+        <div class="profile-desc">Automated market maker</div>
+        <div class="profile-meta">
+          <strong>State:</strong> pair, reserves, k, fee, totalShares, lpShares<br>
+          <strong>Transitions:</strong> swap, add-liquidity, remove-liquidity<br>
+          <strong>Formula:</strong> x &times; y = k (constant product)
+        </div>
+      </div>
+      <div class="profile">
+        <div class="profile-name">escrow.v1</div>
+        <div class="profile-desc">Two-party escrow with arbiter</div>
+        <div class="profile-meta">
+          <strong>State:</strong> buyer, seller, arbiter, amount, status<br>
+          <strong>Transitions:</strong> fund, release, dispute, resolve, refund
+        </div>
+      </div>
+      <div class="profile">
+        <div class="profile-name">sale.v1</div>
+        <div class="profile-desc">Fixed-price token sale</div>
+        <div class="profile-meta">
+          <strong>State:</strong> ticker, rate, supply, sold<br>
+          <strong>Transitions:</strong> buy, close
+        </div>
+      </div>
+      <div class="profile">
+        <div class="profile-name">subscription.v1</div>
+        <div class="profile-desc">Recurring payment agreement</div>
+        <div class="profile-meta">
+          <strong>State:</strong> subscriber, provider, amount, interval, nextDue<br>
+          <strong>Transitions:</strong> pay, pause, resume, cancel
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <h2>Ledger integration</h2>
+
+    <p>Each transition that moves value updates the <a href="https://webledgers.org">webledger</a>. The contract references the ledger but does not contain balances &mdash; the ledger is the source of truth for ownership.</p>
+
+    <p>Transitions specify effects using ledger operations:</p>
+
+    <ul class="effects">
+      <li>credit(who, currency, amount) <span>&mdash; add to balance</span></li>
+      <li>debit(who, currency, amount) <span>&mdash; subtract from balance</span></li>
+      <li>transfer(from, to, currency, amount) <span>&mdash; atomic move</span></li>
+    </ul>
+
+    <hr>
+
+    <h2>Identity</h2>
+
+    <p>Parties are identified by <code>did:nostr:&lt;pubkey&gt;</code>. Authentication uses <a href="https://nip98.com">NIP-98</a> HTTP auth &mdash; a signed Nostr event in the <code>Authorization</code> header.</p>
+
+    <p>This makes contracts accessible to both humans (via <a href="https://www.npmjs.com/package/nip07">NIP-07</a> browser extensions) and AI agents (via stored keys). Any HTTP client with a signing key can participate.</p>
+
+    <hr>
+
+    <h2 id="how-it-works">How it works</h2>
+
+    <p>Contracts live on <a href="https://solidproject.org/">Solid pods</a>. All operations are HTTP.</p>
+
+    <div class="how-it-works">
+      <ol>
+        <li><strong>Read</strong> the contract &mdash; <code>GET /contracts/{id}/state.json</code></li>
+        <li><strong>Submit</strong> a transition &mdash; <code>POST /contracts/{id}/</code> with a signed NIP-98 header</li>
+        <li>The pod <strong>validates</strong> the transition against the contract rules</li>
+        <li>The pod <strong>updates</strong> state, ledger, and trail atomically</li>
+        <li><strong>Verify</strong> the trail &mdash; <code>GET /contracts/{id}/trail.json</code> and check against Bitcoin</li>
+      </ol>
+    </div>
+
+    <p>Transitions are submitted as JSON:</p>
+
+<pre><code>{
+  "transition": "swap",
+  "params": { "sell": "tbtc3", "amount": 1000 }
+}</code></pre>
+
+    <hr>
+
+    <h2>Agent-friendly</h2>
+
+    <p>Web contracts are designed for autonomous agents:</p>
+
+    <ol>
+      <li>Agent gets a nostr keypair (identity)</li>
+      <li>Agent reads <code>state.json</code> to understand the rules</li>
+      <li>Agent submits transitions via HTTP + NIP-98</li>
+      <li>Agent verifies trail against Bitcoin</li>
+    </ol>
+
+    <p>No browser required. No human approval. Compatible with <a href="https://openclaw.ai">OpenClaw</a>, <a href="https://nanoclaw.dev">nanoclaw</a>, and any agent framework that can make HTTP requests.</p>
+
+    <hr>
+
+    <h2>Implementations</h2>
+
+    <table>
+      <tr><th>Project</th><th>Role</th></tr>
+      <tr><td><a href="https://github.com/JavaScriptSolidServer/JavaScriptSolidServer">JavaScript Solid Server</a></td><td>Implements payment and AMM profiles</td></tr>
+      <tr><td><a href="https://webledgers.org">Web Ledgers</a></td><td>Balance tracking spec</td></tr>
+      <tr><td><a href="https://blocktrails.org">Blocktrails</a></td><td>Bitcoin anchoring spec</td></tr>
+      <tr><td><a href="https://nip98.com">NIP-98</a></td><td>HTTP authentication</td></tr>
+    </table>
+
+    <footer>
+      <span>MIT License &copy; 2021&ndash;2026 <a href="https://github.com/webcontracts">webcontracts</a></span>
+      <a href="https://github.com/webcontracts/webcontracts.github.io">Edit this page</a>
+    </footer>
+
+  </div>
+</body>
+</html>
