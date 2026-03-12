@@ -410,6 +410,25 @@ GET  /contracts/{id}/trail.json     &mdash; read audit trail</code></pre>
 
     <hr>
 
+    <h2>Tradeoffs</h2>
+
+    <p>Web contracts make a deliberate tradeoff: give up trustless global consensus, gain speed, zero cost, language freedom, and simplicity.</p>
+
+    <table>
+      <tr><th></th><th>Ethereum</th><th>Web Contracts</th></tr>
+      <tr><td><strong>Consensus</strong></td><td>Global PoS, thousands of nodes</td><td>None &mdash; single executor, verify via trail</td></tr>
+      <tr><td><strong>Language</strong></td><td>Solidity (EVM bytecode)</td><td>Any (JS, Solidity, Python&hellip;)</td></tr>
+      <tr><td><strong>Cost</strong></td><td>Gas fees per operation</td><td>Free (your server, your rules)</td></tr>
+      <tr><td><strong>Speed</strong></td><td>~12s block time</td><td>Instant (HTTP request/response)</td></tr>
+      <tr><td><strong>State</strong></td><td>On-chain, global</td><td>JSON files, anywhere</td></tr>
+      <tr><td><strong>Proof</strong></td><td>Blockchain consensus</td><td>Bitcoin-anchored hash chain</td></tr>
+      <tr><td><strong>Access</strong></td><td>Wallet + RPC</td><td>HTTP + NIP-98 keypair</td></tr>
+    </table>
+
+    <p>For most real-world contracts &mdash; escrow between two parties, a token sale, a subscription, an AMM &mdash; you don&rsquo;t need 10,000 nodes agreeing. You need tamper evidence and verifiability. That&rsquo;s what the <a href="https://blocktrails.org">blocktrail</a> provides.</p>
+
+    <hr>
+
     <h2>Implementations</h2>
 
     <table>
