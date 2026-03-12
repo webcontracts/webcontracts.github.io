@@ -73,9 +73,6 @@
     .lang-name { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
     .lang-note { font-size: 0.75rem; color: #6b6b6b; }
 
-    /* Diagram */
-    .diagram { background: #f0efeb; border-radius: 8px; padding: 24px; margin: 20px 0 28px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.8; white-space: pre; overflow-x: auto; text-align: center; }
-
     /* List */
     ul, ol { margin: 8px 0 20px; padding-left: 24px; }
     li { margin-bottom: 6px; }
@@ -167,13 +164,52 @@
 
     <p>The contract logic is <strong>pluggable</strong>. State, ledger, and trail are always the same format regardless of what language the contract is written in.</p>
 
-    <div class="diagram">contract.js/sol/py        state.json        ledger.json        trail
-+------------------+    +------------+    +--------------+    +--------+
-| validate()       |--->| seq, prev  |--->| balances     |--->| Bitcoin|
-| transition()     |    | state data |    | multi-currency|   | BIP-341|
-| effects()        |    | hash chain |    | did:nostr     |   | anchor |
-+------------------+    +------------+    +--------------+    +--------+
-     language              JSON               JSON             Bitcoin</div>
+    <!-- Architecture diagram: Contract → State → Ledger → Trail -->
+    <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:20px auto 28px;display:block" role="img" aria-label="Architecture: contract source flows to state.json, ledger.json, and Bitcoin trail">
+      <style>
+        .d-box { fill: #f0efeb; stroke: #c8c4bc; stroke-width: 1.5; rx: 8; }
+        .d-box-hl { fill: #eee8d5; stroke: #d4c5a0; stroke-width: 1.5; rx: 8; }
+        .d-title { font: 700 13px -apple-system, sans-serif; fill: #2c2c2c; }
+        .d-text { font: 11px -apple-system, sans-serif; fill: #6b6b6b; }
+        .d-label { font: 600 10px -apple-system, sans-serif; fill: #9b9690; letter-spacing: 0.05em; text-transform: uppercase; }
+        .d-arrow { stroke: #b0aaa0; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      </style>
+      <defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#b0aaa0"/></marker></defs>
+      <!-- Contract -->
+      <rect class="d-box-hl" x="0" y="16" width="155" height="100"/>
+      <text class="d-title" x="78" y="44" text-anchor="middle">Contract</text>
+      <text class="d-text" x="78" y="62" text-anchor="middle">validate()</text>
+      <text class="d-text" x="78" y="76" text-anchor="middle">transition()</text>
+      <text class="d-text" x="78" y="90" text-anchor="middle">effects()</text>
+      <text class="d-label" x="78" y="136" text-anchor="middle">js / sol / py</text>
+      <!-- Arrow 1 -->
+      <line class="d-arrow" x1="160" y1="66" x2="185" y2="66"/>
+      <!-- State -->
+      <rect class="d-box" x="190" y="16" width="150" height="100"/>
+      <text class="d-title" x="265" y="44" text-anchor="middle">State</text>
+      <text class="d-text" x="265" y="62" text-anchor="middle">seq, prev</text>
+      <text class="d-text" x="265" y="76" text-anchor="middle">state data</text>
+      <text class="d-text" x="265" y="90" text-anchor="middle">hash chain</text>
+      <text class="d-label" x="265" y="136" text-anchor="middle">json</text>
+      <!-- Arrow 2 -->
+      <line class="d-arrow" x1="345" y1="66" x2="375" y2="66"/>
+      <!-- Ledger -->
+      <rect class="d-box" x="380" y="16" width="155" height="100"/>
+      <text class="d-title" x="458" y="44" text-anchor="middle">Ledger</text>
+      <text class="d-text" x="458" y="62" text-anchor="middle">balances</text>
+      <text class="d-text" x="458" y="76" text-anchor="middle">multi-currency</text>
+      <text class="d-text" x="458" y="90" text-anchor="middle">did:nostr</text>
+      <text class="d-label" x="458" y="136" text-anchor="middle">json</text>
+      <!-- Arrow 3 -->
+      <line class="d-arrow" x1="540" y1="66" x2="570" y2="66"/>
+      <!-- Trail -->
+      <rect class="d-box" x="575" y="16" width="140" height="100"/>
+      <text class="d-title" x="645" y="44" text-anchor="middle">Trail</text>
+      <text class="d-text" x="645" y="62" text-anchor="middle">Bitcoin</text>
+      <text class="d-text" x="645" y="76" text-anchor="middle">BIP-341</text>
+      <text class="d-text" x="645" y="90" text-anchor="middle">anchor</text>
+      <text class="d-label" x="645" y="136" text-anchor="middle">bitcoin</text>
+    </svg>
 
     <hr>
 
@@ -277,9 +313,53 @@
 
     <p>Each transition increments <code>seq</code> and sets <code>prev</code> to the SHA-256 hash of the previous state (<a href="https://www.rfc-editor.org/rfc/rfc8785">JCS</a>-canonicalized). This creates a hash chain that can be verified independently and anchored to Bitcoin via <a href="https://blocktrails.org">blocktrails</a>.</p>
 
-    <div class="diagram">genesis (seq:0) &rarr; swap &rarr; state (seq:1) &rarr; add-liq &rarr; state (seq:2)
-       |                          |                              |
-       blocktrail                 blocktrail                     blocktrail</div>
+    <!-- Sequencing diagram: genesis → transitions → states, each anchored to blocktrail -->
+    <svg viewBox="0 0 720 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:20px auto 28px;display:block" role="img" aria-label="Sequencing: genesis state transitions to seq 1 and seq 2, each anchored by a blocktrail">
+      <style>
+        .s-box { fill: #f0efeb; stroke: #c8c4bc; stroke-width: 1.5; rx: 6; }
+        .s-trans { fill: #eee8d5; stroke: #d4c5a0; stroke-width: 1.5; rx: 12; }
+        .s-title { font: 700 12px -apple-system, sans-serif; fill: #2c2c2c; }
+        .s-sub { font: 11px -apple-system, sans-serif; fill: #6b6b6b; }
+        .s-trail { font: 600 10px -apple-system, sans-serif; fill: #1a5276; }
+        .s-arrow { stroke: #b0aaa0; stroke-width: 1.5; fill: none; marker-end: url(#ah2); }
+        .s-vline { stroke: #c8c4bc; stroke-width: 1; stroke-dasharray: 4,3; }
+      </style>
+      <defs><marker id="ah2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#b0aaa0"/></marker></defs>
+      <!-- Genesis -->
+      <rect class="s-box" x="0" y="10" width="110" height="44"/>
+      <text class="s-title" x="55" y="28" text-anchor="middle">genesis</text>
+      <text class="s-sub" x="55" y="44" text-anchor="middle">seq: 0</text>
+      <line class="s-vline" x1="55" y1="58" x2="55" y2="90"/>
+      <text class="s-trail" x="55" y="108" text-anchor="middle">blocktrail</text>
+      <!-- Arrow -->
+      <line class="s-arrow" x1="115" y1="32" x2="148" y2="32"/>
+      <!-- Swap transition -->
+      <rect class="s-trans" x="153" y="18" width="70" height="28"/>
+      <text class="s-sub" x="188" y="37" text-anchor="middle">swap</text>
+      <!-- Arrow -->
+      <line class="s-arrow" x1="228" y1="32" x2="258" y2="32"/>
+      <!-- State 1 -->
+      <rect class="s-box" x="263" y="10" width="110" height="44"/>
+      <text class="s-title" x="318" y="28" text-anchor="middle">state</text>
+      <text class="s-sub" x="318" y="44" text-anchor="middle">seq: 1</text>
+      <line class="s-vline" x1="318" y1="58" x2="318" y2="90"/>
+      <text class="s-trail" x="318" y="108" text-anchor="middle">blocktrail</text>
+      <!-- Arrow -->
+      <line class="s-arrow" x1="378" y1="32" x2="408" y2="32"/>
+      <!-- Add-liq transition -->
+      <rect class="s-trans" x="413" y="18" width="80" height="28"/>
+      <text class="s-sub" x="453" y="37" text-anchor="middle">add-liq</text>
+      <!-- Arrow -->
+      <line class="s-arrow" x1="498" y1="32" x2="528" y2="32"/>
+      <!-- State 2 -->
+      <rect class="s-box" x="533" y="10" width="110" height="44"/>
+      <text class="s-title" x="588" y="28" text-anchor="middle">state</text>
+      <text class="s-sub" x="588" y="44" text-anchor="middle">seq: 2</text>
+      <line class="s-vline" x1="588" y1="58" x2="588" y2="90"/>
+      <text class="s-trail" x="588" y="108" text-anchor="middle">blocktrail</text>
+      <!-- Ellipsis -->
+      <text class="s-sub" x="668" y="37">...</text>
+    </svg>
 
     <hr>
 
